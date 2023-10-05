@@ -8,12 +8,14 @@ const FeatureProduct = () => {
       name: "Pack of 4 Classic Polo T-Shirts",
       price: 1000,
       url: "/four-tshirts.webp",
+      link: "https://eduquirk.vercel.app/polo-tshirts-combo",
     },
     {
       id: 2,
       name: "Set of 5 Neckline T-Shirts",
       price: 1000,
       url: "/five-tshirts.webp",
+      link: "https://eduquirk.vercel.app/rugged-neckline-tee",
     },
   ];
 

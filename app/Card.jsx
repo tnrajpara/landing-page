@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 const temp = ({ details }) => {
   return (
@@ -21,9 +22,12 @@ const temp = ({ details }) => {
                 <h1 className="text-xl font-semibold">{item.name}</h1>
               </div>
               <div className="flex justify-center mt-3">
-                <button className="text-xl text-black hover:border-b-4 border-black border  p-2 rounded-lg ">
+                <Link
+                  className="text-xl text-black hover:border-b-4 border-black border  p-2 rounded-lg"
+                  href={item.link}
+                >
                   View details
-                </button>
+                </Link>
               </div>
             </div>
           </>
