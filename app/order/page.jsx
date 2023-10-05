@@ -1,112 +1,153 @@
 "use server";
+import Image from "next/image";
 import React from "react";
 import { LiaEyeSolid, LiaEyeSlash } from "react-icons/lia";
 
 async function GetData() {
-  // https://trackmyorder.clickpost.in/api/v1/track-order
-  // query - waybill
-  //   request - get
-
   const waybill = "OIPC0008414403";
+  const waybill1 = "OIPC0008424429";
+  const waybill2 = "OIPC0008513563";
+  const waybill3 = "OIPC0008513284";
   async function fetchData() {
     const response = await fetch(
-      `https://trackmyorder.clickpost.in/api/v1/track-order?waybill=${waybill}`
+      `https://trackmyorder.clickpost.in/api/v1/track-order?waybill=${waybill1}`
     );
     const json = await response.json();
     return json;
   }
   const data = await fetchData();
 
-  const dynamicKey = Object.keys(data.result)[0];
+  const trackingId = Object.keys(data.result)[0];
+  const result = data.result[trackingId];
+  const scans = result.scans;
+  const image = result.additional.order_detail[0].images;
+  const description = result.additional.order_detail[0].description;
 
-  // order place information
-  const checkOrderPlaced =
-    data.result[dynamicKey].scans[3].clickpost_status_code;
-  const orderDate = data.result[dynamicKey].scans[3].timestamp;
+  const statusBucketMap = {
+    1: "Order Placed",
+    2: "Dispatched",
+    3: "In Transit",
+    4: "Out For Delivery",
+    5: "Failed Delivery",
+    6: "Delivered",
+    7: "Returned",
+    8: "Lost",
+    9: "Damaged",
+  };
 
-  // dispatch information
-  const checkDispatched =
-    data.result[dynamicKey].latest_status.clickpost_status_code;
-  const location = data.result[dynamicKey].latest_status.location;
+  const getStatusColor = (bucket) => {
+    switch (bucket) {
+      case 1:
+      case 2:
+      case 3:
+      case 4:
+        return "bg-green-400";
 
-  // transit information
-  const checkTransit = data.result[dynamicKey].scans[1].clickpost_status_code;
+      default:
+        return "bg-gray-300";
+    }
+  };
 
-  /// out of delivery information
-  const checkOutOfDelivery =
-    data.result[dynamicKey].scans[0].clickpost_status_code;
+  const formatScanInfo = (bucket) => {
+    let statusColor;
+    const scanData = scans.find((scan) => {
+      // console.log(scan.clickpost_status_bucket === bucket);
+      statusColor =
+        scan.clickpost_status_bucket === bucket ? "success" : "fail";
+      return scan.clickpost_status_bucket === bucket;
+    });
 
-  // delivered information
-  const checkDelivered = data.result[dynamicKey].scans[0].clickpost_status_code;
-  return (
-    <div>
-      <div className="flex flex-col justify-center items-center mb-6 lg:mb-10">
-        <h1 className="text-3xl font-semibold mt-10">Order</h1>
-        <div className="border border-gray-900 w-96 flex justify-center p-3 mt-5 flex-col">
-          <div className="lg:mb-6 flex space-x-6">
-            <div>
-              <h1>
-                {checkOrderPlaced === 1 || 2 || 3 || 28 || 25 || 10 ? (
-                  <LiaEyeSolid className="text-4xl text-green-600" />
-                ) : (
-                  <LiaEyeSlash className="text-4xl text-red-600" />
-                )}
-              </h1>
-            </div>
-            <div>
-              <h3>Order placed</h3>
-              <h4>Order Date: {orderDate}</h4>
-            </div>
-          </div>
-          <div className="lg:mb-6 flex space-x-6">
-            <h1>
-              {checkDispatched === 4 ? (
-                <LiaEyeSolid className="text-4xl text-green-600" />
-              ) : (
-                <LiaEyeSlash className="text-4xl text-red-600" />
+    return (
+      <div
+        key={bucket}
+        className={`p-3 mb-4 rounded-lg ${statusColor} relative`}
+      >
+        <div className="flex space-x-5 space-y-4">
+          {statusColor === "success" ? (
+            <div className="flex lg:space-x-5 space-x-3">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32">
+                <g fill="none" fill-rule="evenodd">
+                  <path
+                    fill="#20C591"
+                    d="M16 28c6.627 0 12-5.373 12-12 0-.758-.07-1.5-.205-2.219C26.755 8.214 21.87 4 16 4 9.373 4 4 9.373 4 16s5.373 12 12 12z"
+                  />
+                  <path
+                    d="M11 17l3.273 3.5m0 0l8.182-7.5"
+                    stroke="#FFF"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                  />
+                </g>
+              </svg>
+              <div className="text-center">{statusBucketMap[bucket]}</div>
+              {scanData && (
+                <div className="ml-4 text-center" suppressHydrationWarning>
+                  {console.log(new Date(scanData.timestamp))}
+                  {new Date(scanData.timestamp).toDateString()}{" "}
+                  {new Date(scanData.timestamp).toLocaleTimeString()}
+                </div>
               )}
-            </h1>
-            <div>
-              <h3>Dispatched</h3>
-              <h4>
-                Location:
-                <span>{location}</span>
-              </h4>
-              <h4>{orderDate}</h4>
-              <button className="text-blue-600">SEE ALL UPDATES</button>
             </div>
-          </div>
-          <div className="lg:mb-6 flex space-x-6">
-            <h1>
-              {checkTransit === 5 || 18 || 19 || 20 ? (
-                <LiaEyeSolid className="text-4xl text-green-600" />
-              ) : (
-                <LiaEyeSlash className="text-4xl text-red-600" />
-              )}
-            </h1>
-            <div>
-              <h3>In Transit</h3>
-              <h4>Location:{location}</h4>
-              <h4>{orderDate}</h4>
-            </div>
-          </div>
-          <div className="lg:mb-6 flex space-x-6">
-            <h1>
-              {checkOutOfDelivery === 6 ? (
-                <LiaEyeSolid className="text-4xl text-green-600" />
-              ) : (
-                <LiaEyeSlash className="text-4xl text-red-600" />
-              )}
-            </h1>{" "}
-            <h1>Out for delivery</h1>
-          </div>
-          <div className="lg:mb-6">
-            <h1></h1>
-            <h3>Delivered</h3>
-          </div>
+          ) : (
+            <div></div>
+          )}
         </div>
       </div>
-    </div>
+    );
+  };
+
+  return (
+    <>
+      <div className="max-w-2xl mx-auto mt-10 p-5 border rounded-lg shadow-lg">
+        <div className="max-w-2xl mx-auto mb-6 p-5 border rounded-lg shadow-lg">
+          <h1>Order Id: {data.result.order_id}</h1>
+          <div className="flex justity-between space-x-3">
+            <div>
+              <Image src={image} width={100} height={100} alt="not found" />
+            </div>
+            <div>
+              <h1>{description}</h1>
+              <h3>Tracking id: {trackingId}</h3>
+              <h5>shipping partner: {data.result.cp_name}</h5>
+            </div>
+          </div>
+        </div>
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((bucket) => {
+          return formatScanInfo(bucket);
+        })}
+
+        {/* <button
+          className={`p-3 mt-4 ${
+            showDetails ? "bg-blue-500 text-white" : "bg-gray-300 text-gray-600"
+          } rounded`}
+        >
+          SEE ALL UPDATES
+        </button> */}
+        {/* {showDetails && (
+          <div className="mt-4">
+            {scans.map((scan) => {
+              const bucket = scan.clickpost_status_bucket;
+              return (
+                <div
+                  key={scan.timestamp}
+                  className={`p-3 mb-4 rounded-lg ${getStatusColor(bucket)}`}
+                >
+                  {`${statusBucketMap[bucket]}`}
+                  <div className="ml-4">
+                    Location: {scan.location}
+                    <br />
+                    {new Date(scan.timestamp).toDateString()}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )} */}
+
+        <div className="mt-4 text-gray-700">Tracking ID: {trackingId}</div>
+      </div>
+    </>
   );
 }
 
